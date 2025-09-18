@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, Alert, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Dimensions, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,6 +26,17 @@ export default function SignUpScreen() {
       Alert.alert('Error', 'Failed to sign up.');
     }
   };
+
+  const handlePhamacy = async () => {
+  
+    try {
+      // Continue to health quiz for personalization
+      router.push('/pharmacy/login');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to sign up.');
+    }
+  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -53,26 +64,26 @@ export default function SignUpScreen() {
         <View style={styles.formContainer}>
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email or Phone"
+      <TextInput
+        style={styles.input}
+        placeholder="Email or Phone"
               placeholderTextColor="#999"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
               autoComplete="email"
-            />
+      />
           </View>
 
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
               placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
+        value={password}
+        onChangeText={setPassword}
               secureTextEntry={!showPassword}
               autoComplete="password"
             />
@@ -97,7 +108,18 @@ export default function SignUpScreen() {
             >
               <Text style={styles.primaryButtonText}>Create Account</Text>
             </LinearGradient>
-          </TouchableOpacity>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.primaryButton} onPress={handlePhamacy}>
+            <LinearGradient
+              colors={['#FF6B9D', '#FF8E53']}
+              style={styles.buttonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={styles.primaryButtonText}>Login as Pharmacy</Text>
+            </LinearGradient>
+      </TouchableOpacity>
 
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
@@ -108,12 +130,12 @@ export default function SignUpScreen() {
           <TouchableOpacity style={styles.socialButton}>
             <Ionicons name="logo-google" size={20} color="#333" />
             <Text style={styles.socialButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
+      </TouchableOpacity>
           
           <TouchableOpacity style={styles.socialButton}>
             <Ionicons name="logo-apple" size={20} color="#333" />
             <Text style={styles.socialButtonText}>Continue with Apple</Text>
-          </TouchableOpacity>
+      </TouchableOpacity>
 
           <View style={styles.termsContainer}>
             <Text style={styles.termsText}>

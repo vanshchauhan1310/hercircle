@@ -37,11 +37,13 @@ export default function RootLayout() {
         <>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="product/[id]" />
+          <Stack.Screen name="pharmacy" />
         </>
       ) : (
         <>
           <Stack.Screen name="onboarding/signup" />
           <Stack.Screen name="onboarding/health-quiz" />
+          <Stack.Screen name="pharmacy" />
         </>
       )}
     </Stack>
