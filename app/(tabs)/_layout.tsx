@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Platform, View } from 'react-native';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -8,50 +8,26 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 0,
+          backgroundColor: '#fff',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
           height: Platform.OS === 'ios' ? 90 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 15,
-          paddingTop: 12,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -8 },
-          shadowOpacity: 0.12,
-          shadowRadius: 20,
-          elevation: 12,
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+          paddingTop: 10,
         },
-        tabBarActiveTintColor: '#FF6B9D',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: '#3B82F6',
+        tabBarInactiveTintColor: '#6B7280',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginTop: 6,
-          letterSpacing: 0.3,
         },
-        tabBarIconStyle: {
-          marginTop: 4,
-        },
-      }}
-    >
+      }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Shop',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={{
-              backgroundColor: focused ? 'rgba(255, 107, 157, 0.1)' : 'transparent',
-              padding: 8,
-              borderRadius: 12,
-            }}>
-              <Ionicons 
-                name={focused ? "bag" : "bag-outline"} 
-                size={focused ? 24 : 22} 
-                color={color} 
-              />
-            </View>
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="shopping-bag" size={focused ? 24 : 22} color={color} />
           ),
         }}
       />
@@ -59,18 +35,8 @@ export default function TabLayout() {
         name="learn"
         options={{
           title: 'Learn',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={{
-              backgroundColor: focused ? 'rgba(255, 107, 157, 0.1)' : 'transparent',
-              padding: 8,
-              borderRadius: 12,
-            }}>
-              <Ionicons 
-                name={focused ? "book" : "book-outline"} 
-                size={focused ? 24 : 22} 
-                color={color} 
-              />
-            </View>
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="book-open" size={focused ? 24 : 22} color={color} />
           ),
         }}
       />
@@ -78,18 +44,8 @@ export default function TabLayout() {
         name="tracker"
         options={{
           title: 'Tracker',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={{
-              backgroundColor: focused ? 'rgba(255, 107, 157, 0.1)' : 'transparent',
-              padding: 8,
-              borderRadius: 12,
-            }}>
-              <Ionicons 
-                name={focused ? "calendar" : "calendar-outline"} 
-                size={focused ? 24 : 22} 
-                color={color} 
-              />
-            </View>
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="calendar" size={focused ? 24 : 22} color={color} />
           ),
         }}
       />
@@ -97,18 +53,8 @@ export default function TabLayout() {
         name="flowbot"
         options={{
           title: 'FlowBot',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={{
-              backgroundColor: focused ? 'rgba(255, 107, 157, 0.1)' : 'transparent',
-              padding: 8,
-              borderRadius: 12,
-            }}>
-              <Ionicons 
-                name={focused ? "chatbubble" : "chatbubble-outline"} 
-                size={focused ? 24 : 22} 
-                color={color} 
-              />
-            </View>
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="message-circle" size={focused ? 24 : 22} color={color} />
           ),
         }}
       />
@@ -116,18 +62,8 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={{
-              backgroundColor: focused ? 'rgba(255, 107, 157, 0.1)' : 'transparent',
-              padding: 8,
-              borderRadius: 12,
-            }}>
-              <Ionicons 
-                name={focused ? "person" : "person-outline"} 
-                size={focused ? 24 : 22} 
-                color={color} 
-              />
-            </View>
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="user" size={focused ? 24 : 22} color={color} />
           ),
         }}
       />
