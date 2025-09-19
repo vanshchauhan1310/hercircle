@@ -3,7 +3,6 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-  Alert,
   FlatList,
   SafeAreaView,
   ScrollView,
@@ -15,39 +14,33 @@ import {
 
 const mockData = {
   stats: [
-    { id: '1', title: 'Pending Orders', value: '5', icon: 'clock', color: '#F97316' },
-    { id: '2', title: 'Low Stock', value: '12', icon: 'alert-triangle', color: '#F59E0B' },
-    { id: '3', title: 'Out of Stock', value: '3', icon: 'slash', color: '#EF4444' },
-    { id: '4', title: 'Revenue (Today)', value: '$1,250', icon: 'dollar-sign', color: '#10B981' },
+    { id: '1', title: 'Pending Orders', value: '28', icon: 'clock', color: '#F97316' },
+    { id: '2', title: 'Completed Orders', value: '1,240', icon: 'check-circle', color: '#10B981' },
+    { id: '3', title: 'Pharmacies', value: '42', icon: 'home', color: '#3B82F6' },
+    { id: '4', title: 'Revenue (Month)', value: '$82,500', icon: 'dollar-sign', color: '#8B5CF6' },
   ],
-  distributors: [
-    { id: 'd1', name: 'HealthSupply Co.', leadTime: '2-3 days', minOrder: 100, rating: 4.8 },
-    { id: 'd2', name: 'MediWholesale', leadTime: '1-2 days', minOrder: 150, rating: 4.6 },
+  pharmacyOrders: [
+    { id: 'ORD-P01', pharmacy: 'GoodHealth Pharmacy', items: 5, total: '$1,200', status: 'Pending' },
+    { id: 'ORD-P02', pharmacy: 'CityMed Pharmacy', items: 8, total: '$2,500', status: 'Shipped' },
+    { id: 'ORD-P03', pharmacy: 'Wellness Drugstore', items: 3, total: '$850', status: 'Delivered' },
   ],
 };
 
-export default function PharmacyDashboard() {
-  const { auth, logout } = useAuth();
+export default function DistributorDashboard() {
+  const { logout } = useAuth();
 
   const StatCard = ({ item }: { item: typeof mockData.stats[0] }) => (
     <View style={[styles.statCard, { backgroundColor: item.color }]}>
-      <Feather name={item.icon as any} size={22} color="#fff" />
+      <Feather name={item.icon as any} size={24} color="#fff" />
       <Text style={styles.statValue}>{item.value}</Text>
       <Text style={styles.statTitle}>{item.title}</Text>
     </View>
   );
 
-  const handlePlaceOrder = (distributorName: string) => {
-    Alert.alert(
-      'Place Order',
-      `This will eventually open an order screen for ${distributorName}.`
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#6D28D9', '#4C1D95']} style={styles.header}>
-        <Text style={styles.headerTitle}>Pharmacy Dashboard</Text>
+      <LinearGradient colors={['#059669', '#10B981']} style={styles.header}>
+        <Text style={styles.headerTitle}>Distributor Dashboard</Text>
         <TouchableOpacity onPress={logout}>
           <Feather name="log-out" size={24} color="#fff" />
         </TouchableOpacity>
@@ -60,29 +53,35 @@ export default function PharmacyDashboard() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.geolocationButton}>
-          <Feather name="map-pin" size={20} color="#fff" />
-          <Text style={styles.geolocationButtonText}>Find Nearby Distributors</Text>
-        </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Feather name="plus-circle" size={28} color="#3B82F6" />
+              <Text style={styles.actionButtonText}>New Order to Admin</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Feather name="list" size={28} color="#10B981" />
+              <Text style={styles.actionButtonText}>View My Orders</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Distributors</Text>
+          <Text style={styles.sectionTitle}>Pharmacy Orders</Text>
           <FlatList
-            data={mockData.distributors}
+            data={mockData.pharmacyOrders}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View style={styles.listItem}>
                 <View>
-                  <Text style={styles.listItemTitle}>{item.name}</Text>
-                  <Text style={styles.listItemSubtitle}>Lead Time: {item.leadTime}</Text>
-                  <Text style={styles.listItemSubtitle}>Min. Order: ${item.minOrder}</Text>
+                  <Text style={styles.listItemTitle}>{item.pharmacy}</Text>
+                  <Text style={styles.listItemSubtitle}>{item.id} - {item.items} items</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.orderButton}
-                  onPress={() => handlePlaceOrder(item.name)}>
-                  <Feather name="plus" size={18} color="#fff" />
-                  <Text style={styles.orderButtonText}>New Order</Text>
-                </TouchableOpacity>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.listItemTitle}>{item.total}</Text>
+                  <Text style={styles.listItemSubtitle}>{item.status}</Text>
+                </View>
               </View>
             )}
           />
@@ -139,21 +138,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     marginTop: 4,
   },
-  geolocationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#3B82F6',
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 20,
-    gap: 10,
-  },
-  geolocationButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   section: {
     marginBottom: 20,
   },
@@ -163,6 +147,29 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 15,
   },
+  actionsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  actionButtonText: {
+    marginTop: 10,
+    fontWeight: '600',
+    color: '#374151',
+    textAlign: 'center',
+  },
   listItem: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -171,11 +178,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
   },
   listItemTitle: {
     fontSize: 16,
@@ -185,19 +187,6 @@ const styles = StyleSheet.create({
   listItemSubtitle: {
     fontSize: 14,
     color: '#6B7280',
-    marginTop: 4,
-  },
-  orderButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10B981',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  orderButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    marginTop: 2,
   },
 });
