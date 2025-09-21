@@ -18,38 +18,67 @@ import {
 
 const { height } = Dimensions.get('window');
 
-export default function LoginScreen() {
+type Role = 'pharmacy' | 'distributor' | 'admin';
+
+export default function SupplierLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<Role>('pharmacy');
   const { login } = useAuth();
 
-  const handleCustomerLogin = () => {
+  const handleSupplierLogin = () => {
     if (!email || !password) {
       Alert.alert('Missing Info', 'Please enter both email and password.');
       return;
     }
-    login({ email, role: 'customer', loggedInAt: Date.now() });
+    login({ email, role, loggedInAt: Date.now() });
   };
+
+  const RoleSelector = () => (
+    <View style={styles.roleSelectorContainer}>
+      {[
+        { id: 'pharmacy', name: 'Pharmacy', icon: 'home' },
+        { id: 'distributor', name: 'Distributor', icon: 'truck' },
+        { id: 'admin', name: 'Admin', icon: 'shield' },
+      ].map((r) => (
+        <TouchableOpacity
+          key={r.id}
+          style={[styles.roleButton, role === r.id && styles.roleButtonActive]}
+          onPress={() => setRole(r.id as Role)}>
+          <Feather
+            name={r.icon as any}
+            size={18}
+            color={role === r.id ? '#fff' : '#4B5563'}
+          />
+          <Text style={[styles.roleButtonText, role === r.id && styles.roleButtonTextActive]}>
+            {r.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#3B82F6', '#1D4ED8']} style={styles.gradient} />
+      <LinearGradient colors={['#059669', '#10B981']} style={styles.gradient} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your customer account</Text>
+          <Text style={styles.title}>Supplier Portal</Text>
+          <Text style={styles.subtitle}>Sign in to your business account</Text>
         </View>
 
         <View style={styles.formContainer}>
+          <RoleSelector />
+
           <View style={styles.inputContainer}>
             <Feather name="mail" size={20} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Email or Phone"
+              placeholder="Business Email"
               placeholderTextColor="#9CA3AF"
               value={email}
               onChangeText={setEmail}
@@ -75,26 +104,16 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handleCustomerLogin}>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleSupplierLogin}>
             <Text style={styles.primaryButtonText}>Sign In</Text>
           </TouchableOpacity>
 
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/(auth)/customer-signup')}>
-            <Text style={styles.secondaryButtonText}>Create Customer Account</Text>
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/(auth)/supplier-signup')}>
+            <Text style={styles.secondaryButtonText}>Create a new Supplier Account</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.tertiaryButton}
-            onPress={() => router.push('/(auth)/supplier-login')}>
-            <Text style={styles.tertiaryButtonText}>Login as a Supplier</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Not a supplier? Go back</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -103,6 +122,15 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  secondaryButton: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 14,
+    color: '#059669',
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F3F4F6',
@@ -145,6 +173,37 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 12,
   },
+  roleSelectorContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+  },
+  roleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  roleButtonActive: {
+    backgroundColor: '#10B981',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  roleButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  roleButtonTextActive: {
+    color: '#fff',
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -168,60 +227,25 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   primaryButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#059669',
     borderRadius: 12,
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   primaryButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  dividerContainer: {
-    flexDirection: 'row',
+  backButton: {
+    marginTop: 20,
     alignItems: 'center',
-    marginVertical: 24,
   },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E7EB',
-  },
-  dividerText: {
-    marginHorizontal: 16,
+  backButtonText: {
+    fontSize: 14,
     color: '#6B7280',
-    fontSize: 14,
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F9FAFB',
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1d4ed8',
-  },
-  tertiaryButton: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  tertiaryButtonText: {
-    fontSize: 14,
-    color: '#64748b',
     fontWeight: '500',
   },
 });

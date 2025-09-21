@@ -1,10 +1,9 @@
 import { useAuth } from '@/context/AuthContext';
+import { Colors } from '@/constants/Colors';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  FlatList,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -12,23 +11,26 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { BarChart, XAxis, YAxis } from 'react-native-svg-charts';
 
 const mockData = {
   stats: [
-    { id: '1', title: 'Total Revenue', value: '$1,250,450', icon: 'dollar-sign', color: '#10B981' },
-    { id: '2', title: 'Total Orders', value: '8,320', icon: 'package', color: '#3B82F6' },
-    { id: '3', title: 'Distributors', value: '42', icon: 'truck', color: '#F97316' },
-    { id: '4', title: 'Pharmacies', value: '1,280', icon: 'home', color: '#8B5CF6' },
+    { title: 'Total Revenue', value: '$1.25M', icon: 'dollar-sign' },
+    { title: 'Total Orders', value: '8.3K', icon: 'package' },
+    { title: 'Distributors', value: '42', icon: 'truck' },
+    { title: 'Pharmacies', value: '1.2K', icon: 'home' },
   ],
   recentOrders: [
     { id: 'ORD-001', distributor: 'HealthSupply Co.', amount: '$5,400', status: 'Shipped' },
     { id: 'ORD-002', distributor: 'MediWholesale', amount: '$12,800', status: 'Processing' },
-    { id: 'ORD-003', distributor: 'PharmaDirect', amount: '$8,250', status: 'Delivered' },
   ],
-  topProducts: [
-    { id: 'PROD-A1', name: 'Product A', sales: '12,500 units' },
-    { id: 'PROD-B2', name: 'Product B', sales: '9,800 units' },
-    { id: 'PROD-C3', name: 'Product C', sales: '7,200 units' },
+  revenueData: [
+    { value: 50, label: 'Jan' },
+    { value: 75, label: 'Feb' },
+    { value: 100, label: 'Mar' },
+    { value: 80, label: 'Apr' },
+    { value: 120, label: 'May' },
+    { value: 110, label: 'Jun' },
   ],
 };
 
@@ -36,76 +38,66 @@ export default function AdminDashboard() {
   const { logout } = useAuth();
   const router = useRouter();
 
-  const StatCard = ({ item }: { item: typeof mockData.stats[0] }) => (
-    <View style={[styles.statCard, { backgroundColor: item.color }]}>
-      <Feather name={item.icon as any} size={24} color="#fff" />
-      <Text style={styles.statValue}>{item.value}</Text>
-      <Text style={styles.statTitle}>{item.title}</Text>
-    </View>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#1E3A8A', '#3B82F6']} style={styles.header}>
-        <Text style={styles.headerTitle}>Admin Dashboard</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Admin Overview</Text>
         <TouchableOpacity onPress={logout}>
-          <Feather name="log-out" size={24} color="#fff" />
+          <Feather name="log-out" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.statsGrid}>
-          {mockData.stats.map((item) => (
-            <StatCard key={item.id} item={item} />
+          {mockData.stats.map((item, index) => (
+            <View key={index} style={styles.statCard}>
+              <Feather name={item.icon as any} size={22} color={Colors.light.primary} />
+              <Text style={styles.statValue}>{item.value}</Text>
+              <Text style={styles.statTitle}>{item.title}</Text>
+            </View>
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Management</Text>
-          <View style={styles.managementGrid}>
-            <TouchableOpacity
-              style={styles.managementButton}
-              onPress={() => router.push('/admin/management/distributors')}>
-              <Feather name="truck" size={28} color="#3B82F6" />
-              <Text style={styles.managementButtonText}>Distributors</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.managementButton}
-              onPress={() => router.push('/admin/management/products')}>
-              <Feather name="box" size={28} color="#F97316" />
-              <Text style={styles.managementButtonText}>Products</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.managementButton}
-              onPress={() => router.push('/admin/management/orders')}>
-              <Feather name="file-text" size={28} color="#8B5CF6" />
-              <Text style={styles.managementButtonText}>Orders</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.managementButton}>
-              <Feather name="home" size={28} color="#10B981" />
-              <Text style={styles.managementButtonText}>Pharmacies</Text>
-            </TouchableOpacity>
+        <View style={styles.chartCard}>
+          <Text style={styles.cardTitle}>Monthly Revenue (in thousands)</Text>
+          <View style={{ height: 200, flexDirection: 'row' }}>
+            <YAxis
+              data={mockData.revenueData.map(d => d.value)}
+              contentInset={{ top: 20, bottom: 20 }}
+              svg={{ fontSize: 10, fill: Colors.light.textSecondary }}
+              numberOfTicks={6}
+              formatLabel={(value) => `$${value}k`}
+            />
+            <BarChart
+              style={{ flex: 1, marginLeft: 10 }}
+              data={mockData.revenueData.map(d => d.value)}
+              svg={{ fill: Colors.light.primaryMuted }}
+              contentInset={{ top: 20, bottom: 20 }}
+            />
           </View>
+          <XAxis
+            style={{ marginHorizontal: 10, marginTop: 10 }}
+            data={mockData.revenueData}
+            formatLabel={(_, index) => mockData.revenueData[index].label}
+            contentInset={{ left: 30, right: 30 }}
+            svg={{ fontSize: 10, fill: Colors.light.textSecondary }}
+          />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Orders</Text>
-          <FlatList
-            data={mockData.recentOrders}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.listItem}>
-                <View>
-                  <Text style={styles.listItemTitle}>{item.id}</Text>
-                  <Text style={styles.listItemSubtitle}>{item.distributor}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.listItemTitle}>{item.amount}</Text>
-                  <Text style={styles.listItemSubtitle}>{item.status}</Text>
-                </View>
-              </View>
-            )}
-          />
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Management</Text>
+          <TouchableOpacity style={styles.managementButton} onPress={() => router.push('/admin/management/distributors')}>
+            <Feather name="truck" size={22} color={Colors.light.primary} />
+            <Text style={styles.managementButtonText}>Manage Distributors</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.managementButton} onPress={() => router.push('/admin/management/products')}>
+            <Feather name="box" size={22} color={Colors.light.primary} />
+            <Text style={styles.managementButtonText}>Manage Products</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.managementButton} onPress={() => router.push('/admin/management/orders')}>
+            <Feather name="file-text" size={22} color={Colors.light.primary} />
+            <Text style={styles.managementButtonText}>Manage Orders</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -115,7 +107,7 @@ export default function AdminDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -124,91 +116,70 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: Colors.light.surface,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.light.textPrimary,
   },
   content: {
-    padding: 20,
+    padding: 15,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 20,
   },
   statCard: {
     width: '48%',
+    backgroundColor: Colors.light.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 15,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.light.textPrimary,
     marginTop: 8,
   },
   statTitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: Colors.light.textSecondary,
     marginTop: 4,
   },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 15,
-  },
-  managementGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  managementButton: {
-    width: '48%',
-    backgroundColor: '#fff',
+  card: {
+    backgroundColor: Colors.light.surface,
     borderRadius: 16,
     padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+  },
+  chartCard: {
+    backgroundColor: Colors.light.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 15,
+    height: 300,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.light.textPrimary,
+    marginBottom: 15,
+  },
+  managementButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.background,
   },
   managementButtonText: {
-    marginTop: 10,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  listItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  listItemTitle: {
+    marginLeft: 15,
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
-  },
-  listItemSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 2,
+    color: Colors.light.textPrimary,
   },
 });

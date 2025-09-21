@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   FlatList,
+  Image,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -12,13 +13,14 @@ import {
   View,
 } from 'react-native';
 
-const mockDistributors = [
-  { id: '1', name: 'HealthSupply Co.', location: 'New York, NY' },
-  { id: '2', name: 'MediWholesale', location: 'Los Angeles, CA' },
-  { id: '3', name: 'PharmaDirect', location: 'Chicago, IL' },
+const mockProducts = [
+  { id: '1', name: 'Product A', category: 'Category 1', price: 10.99, image: 'https://via.placeholder.com/150' },
+  { id: '2', name: 'Product B', category: 'Category 2', price: 25.50, image: 'https://via.placeholder.com/150' },
+  { id: '3', name: 'Product C', category: 'Category 1', price: 15.00, image: 'https://via.placeholder.com/150' },
+  { id: '4', name: 'Product D', category: 'Category 3', price: 5.99, image: 'https://via.placeholder.com/150' },
 ];
 
-export default function ManageDistributorsScreen() {
+export default function ProductCatalogScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -28,9 +30,9 @@ export default function ManageDistributorsScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Feather name="chevron-left" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Distributors</Text>
+        <Text style={styles.headerTitle}>Product Catalog</Text>
         <TouchableOpacity>
-          <Feather name="plus" size={24} color={Colors.light.textPrimary} />
+          <Feather name="shopping-cart" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -38,22 +40,22 @@ export default function ManageDistributorsScreen() {
         <Feather name="search" size={20} color={Colors.light.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search distributors..."
+          placeholder="Search products..."
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
       <FlatList
-        data={mockDistributors}
+        data={mockProducts}
         keyExtractor={(item) => item.id}
+        numColumns={2}
         renderItem={({ item }) => (
-          <View style={styles.listItem}>
-            <Feather name="truck" size={24} color={Colors.light.primary} />
-            <View style={styles.listItemContent}>
-              <Text style={styles.listItemTitle}>{item.name}</Text>
-              <Text style={styles.listItemSubtitle}>{item.location}</Text>
-            </View>
+          <View style={styles.productCard}>
+            <Image source={{ uri: item.image }} style={styles.productImage} />
+            <Text style={styles.productName}>{item.name}</Text>
+            <Text style={styles.productCategory}>{item.category}</Text>
+            <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
           </View>
         )}
         contentContainerStyle={styles.list}
@@ -73,8 +75,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     backgroundColor: Colors.light.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.background,
   },
   headerTitle: {
     fontSize: 20,
@@ -100,26 +100,34 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 15,
   },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  productCard: {
+    flex: 1,
     backgroundColor: Colors.light.surface,
     borderRadius: 12,
-    padding: 20,
+    margin: 7.5,
+    padding: 15,
+    alignItems: 'center',
+  },
+  productImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
     marginBottom: 10,
   },
-  listItemContent: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  listItemTitle: {
+  productName: {
     fontSize: 16,
     fontWeight: '600',
     color: Colors.light.textPrimary,
+    textAlign: 'center',
   },
-  listItemSubtitle: {
-    fontSize: 14,
+  productCategory: {
+    fontSize: 12,
     color: Colors.light.textSecondary,
-    marginTop: 4,
+    marginVertical: 4,
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.light.primary,
   },
 });

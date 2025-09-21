@@ -18,18 +18,21 @@ import {
 
 const { height } = Dimensions.get('window');
 
-export default function LoginScreen() {
+export default function CustomerSignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
-  const handleCustomerLogin = () => {
+  const handleSignup = () => {
     if (!email || !password) {
       Alert.alert('Missing Info', 'Please enter both email and password.');
       return;
     }
+    // In a real app, you would create a new user account in your backend.
+    // For now, we'll just log in the user as a customer.
     login({ email, role: 'customer', loggedInAt: Date.now() });
+    router.push('/onboarding/health-quiz');
   };
 
   return (
@@ -40,8 +43,8 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your customer account</Text>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join our community of customers</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -49,13 +52,12 @@ export default function LoginScreen() {
             <Feather name="mail" size={20} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Email or Phone"
+              placeholder="Email"
               placeholderTextColor="#9CA3AF"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              autoComplete="email"
             />
           </View>
 
@@ -68,33 +70,18 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
-              autoComplete="password"
             />
             <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
               <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handleCustomerLogin}>
-            <Text style={styles.primaryButtonText}>Sign In</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleSignup}>
+            <Text style={styles.primaryButtonText}>Create Account</Text>
           </TouchableOpacity>
 
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/(auth)/customer-signup')}>
-            <Text style={styles.secondaryButtonText}>Create Customer Account</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.tertiaryButton}
-            onPress={() => router.push('/(auth)/supplier-login')}>
-            <Text style={styles.tertiaryButtonText}>Login as a Supplier</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Already have an account? Sign In</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -174,54 +161,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   primaryButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  dividerContainer: {
-    flexDirection: 'row',
+  backButton: {
+    marginTop: 20,
     alignItems: 'center',
-    marginVertical: 24,
   },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E7EB',
-  },
-  dividerText: {
-    marginHorizontal: 16,
+  backButtonText: {
+    fontSize: 14,
     color: '#6B7280',
-    fontSize: 14,
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F9FAFB',
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1d4ed8',
-  },
-  tertiaryButton: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  tertiaryButtonText: {
-    fontSize: 14,
-    color: '#64748b',
     fontWeight: '500',
   },
 });

@@ -1,6 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
+import { Colors } from '@/constants/Colors';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   Alert,
@@ -15,78 +16,87 @@ import {
 
 const mockData = {
   stats: [
-    { id: '1', title: 'Pending Orders', value: '5', icon: 'clock', color: '#F97316' },
-    { id: '2', title: 'Low Stock', value: '12', icon: 'alert-triangle', color: '#F59E0B' },
-    { id: '3', title: 'Out of Stock', value: '3', icon: 'slash', color: '#EF4444' },
-    { id: '4', title: 'Revenue (Today)', value: '$1,250', icon: 'dollar-sign', color: '#10B981' },
+    { title: 'Pending Orders', value: '5', icon: 'clock' },
+    { title: 'Low Stock', value: '12', icon: 'alert-triangle' },
+    { title: 'Out of Stock', value: '3', icon: 'slash' },
+    { title: 'Revenue (Today)', value: '$1.2K', icon: 'dollar-sign' },
   ],
   distributors: [
     { id: 'd1', name: 'HealthSupply Co.', leadTime: '2-3 days', minOrder: 100, rating: 4.8 },
     { id: 'd2', name: 'MediWholesale', leadTime: '1-2 days', minOrder: 150, rating: 4.6 },
   ],
+  hasDistributor: true, // Set to false to see the "Contact Admin" card
 };
 
 export default function PharmacyDashboard() {
-  const { auth, logout } = useAuth();
-
-  const StatCard = ({ item }: { item: typeof mockData.stats[0] }) => (
-    <View style={[styles.statCard, { backgroundColor: item.color }]}>
-      <Feather name={item.icon as any} size={22} color="#fff" />
-      <Text style={styles.statValue}>{item.value}</Text>
-      <Text style={styles.statTitle}>{item.title}</Text>
-    </View>
-  );
-
-  const handlePlaceOrder = (distributorName: string) => {
-    Alert.alert(
-      'Place Order',
-      `This will eventually open an order screen for ${distributorName}.`
-    );
-  };
+  const { logout } = useAuth();
+  const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#6D28D9', '#4C1D95']} style={styles.header}>
-        <Text style={styles.headerTitle}>Pharmacy Dashboard</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Pharmacy</Text>
         <TouchableOpacity onPress={logout}>
-          <Feather name="log-out" size={24} color="#fff" />
+          <Feather name="log-out" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.statsGrid}>
-          {mockData.stats.map((item) => (
-            <StatCard key={item.id} item={item} />
+          {mockData.stats.map((item, index) => (
+            <View key={index} style={styles.statCard}>
+              <Feather name={item.icon as any} size={22} color={Colors.light.primary} />
+              <Text style={styles.statValue}>{item.value}</Text>
+              <Text style={styles.statTitle}>{item.title}</Text>
+            </View>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.geolocationButton}>
-          <Feather name="map-pin" size={20} color="#fff" />
-          <Text style={styles.geolocationButtonText}>Find Nearby Distributors</Text>
+        <TouchableOpacity style={styles.primaryButton}>
+          <Feather name="plus" size={20} color="#fff" />
+          <Text style={styles.primaryButtonText}>Create New Order</Text>
         </TouchableOpacity>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Distributors</Text>
-          <FlatList
-            data={mockData.distributors}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.listItem}>
-                <View>
-                  <Text style={styles.listItemTitle}>{item.name}</Text>
-                  <Text style={styles.listItemSubtitle}>Lead Time: {item.leadTime}</Text>
-                  <Text style={styles.listItemSubtitle}>Min. Order: ${item.minOrder}</Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/pharmacy/catalog')}>
+          <Feather name="book-open" size={20} color={Colors.light.primary} />
+          <Text style={styles.secondaryButtonText}>Browse Product Catalog</Text>
+        </TouchableOpacity>
+
+        {mockData.hasDistributor ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>My Assigned Distributors</Text>
+            <FlatList
+              data={mockData.distributors}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.listItem}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.listItemTitle}>{item.name}</Text>
+                    <Text style={styles.listItemSubtitle}>Lead Time: {item.leadTime}</Text>
+                    <Text style={styles.listItemSubtitle}>Min. Order: ${item.minOrder}</Text>
+                  </View>
+                  <View style={styles.ratingContainer}>
+                    <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+                    <Feather name="star" size={16} color="#f59e0b" />
+                  </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.orderButton}
-                  onPress={() => handlePlaceOrder(item.name)}>
-                  <Feather name="plus" size={18} color="#fff" />
-                  <Text style={styles.orderButtonText}>New Order</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
+              )}
+            />
+          </View>
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>No Assigned Distributor</Text>
+            <Text style={styles.noDistributorText}>
+              You are not currently assigned to a distributor. You can place orders directly with the admin.
+            </Text>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => Alert.alert('Order from Admin', 'This will open an order form to the admin.')}>
+              <Feather name="shield" size={20} color="#fff" />
+              <Text style={styles.primaryButtonText}>Contact Admin for Order</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -95,7 +105,7 @@ export default function PharmacyDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -104,100 +114,115 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: Colors.light.surface,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.light.textPrimary,
   },
   content: {
-    padding: 20,
+    padding: 15,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 20,
   },
   statCard: {
     width: '48%',
+    backgroundColor: Colors.light.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 15,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.light.textPrimary,
     marginTop: 8,
   },
   statTitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: Colors.light.textSecondary,
     marginTop: 4,
+    textAlign: 'center',
   },
-  geolocationButton: {
+  primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3B82F6',
+    backgroundColor: Colors.light.primary,
     borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 20,
+    paddingVertical: 16,
+    marginBottom: 10,
     gap: 10,
   },
-  geolocationButtonText: {
+  primaryButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  section: {
-    marginBottom: 20,
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.light.surface,
+    borderRadius: 12,
+    paddingVertical: 16,
+    marginBottom: 15,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: Colors.light.primaryMuted,
   },
-  sectionTitle: {
+  secondaryButtonText: {
+    color: Colors.light.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  card: {
+    backgroundColor: Colors.light.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 15,
+  },
+  cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: Colors.light.textPrimary,
     marginBottom: 15,
   },
   listItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.background,
   },
   listItemTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
+    color: Colors.light.textPrimary,
   },
   listItemSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.light.textSecondary,
     marginTop: 4,
   },
-  orderButton: {
+  ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#10B981',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
+    backgroundColor: '#fef3c7',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  orderButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  ratingText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#ca8a04',
+    marginRight: 4,
   },
 });

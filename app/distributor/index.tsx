@@ -1,6 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
+import { Colors } from '@/constants/Colors';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   FlatList,
@@ -14,10 +15,10 @@ import {
 
 const mockData = {
   stats: [
-    { id: '1', title: 'Pending Orders', value: '28', icon: 'clock', color: '#F97316' },
-    { id: '2', title: 'Completed Orders', value: '1,240', icon: 'check-circle', color: '#10B981' },
-    { id: '3', title: 'Pharmacies', value: '42', icon: 'home', color: '#3B82F6' },
-    { id: '4', title: 'Revenue (Month)', value: '$82,500', icon: 'dollar-sign', color: '#8B5CF6' },
+    { title: 'Pending Orders', value: '28', icon: 'clock' },
+    { title: 'Revenue (MTD)', value: '$82.5K', icon: 'dollar-sign' },
+    { title: 'Assigned Pharmacies', value: '42', icon: 'home' },
+    { title: 'Issues', value: '3', icon: 'alert-circle' },
   ],
   pharmacyOrders: [
     { id: 'ORD-P01', pharmacy: 'GoodHealth Pharmacy', items: 5, total: '$1,200', status: 'Pending' },
@@ -29,58 +30,67 @@ const mockData = {
 export default function DistributorDashboard() {
   const { logout } = useAuth();
 
-  const StatCard = ({ item }: { item: typeof mockData.stats[0] }) => (
-    <View style={[styles.statCard, { backgroundColor: item.color }]}>
-      <Feather name={item.icon as any} size={24} color="#fff" />
-      <Text style={styles.statValue}>{item.value}</Text>
-      <Text style={styles.statTitle}>{item.title}</Text>
-    </View>
-  );
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Pending':
+        return Colors.light.warning;
+      case 'Shipped':
+        return Colors.light.primaryMuted;
+      case 'Delivered':
+        return Colors.light.success;
+      default:
+        return Colors.light.textSecondary;
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#059669', '#10B981']} style={styles.header}>
-        <Text style={styles.headerTitle}>Distributor Dashboard</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Distributor Hub</Text>
         <TouchableOpacity onPress={logout}>
-          <Feather name="log-out" size={24} color="#fff" />
+          <Feather name="log-out" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.statsGrid}>
-          {mockData.stats.map((item) => (
-            <StatCard key={item.id} item={item} />
+          {mockData.stats.map((item, index) => (
+            <View key={index} style={styles.statCard}>
+              <Feather name={item.icon as any} size={22} color={Colors.light.primary} />
+              <Text style={styles.statValue}>{item.value}</Text>
+              <Text style={styles.statTitle}>{item.title}</Text>
+            </View>
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Feather name="plus-circle" size={28} color="#3B82F6" />
-              <Text style={styles.actionButtonText}>New Order to Admin</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Feather name="list" size={28} color="#10B981" />
-              <Text style={styles.actionButtonText}>View My Orders</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Feather name="plus-circle" size={24} color={Colors.light.primary} />
+            <Text style={styles.actionButtonText}>New Order to Admin</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Feather name="list" size={24} color={Colors.light.primary} />
+            <Text style={styles.actionButtonText}>My Stock</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pharmacy Orders</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Incoming Pharmacy Orders</Text>
           <FlatList
             data={mockData.pharmacyOrders}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View style={styles.listItem}>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.listItemTitle}>{item.pharmacy}</Text>
                   <Text style={styles.listItemSubtitle}>{item.id} - {item.items} items</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.listItemTitle}>{item.total}</Text>
-                  <Text style={styles.listItemSubtitle}>{item.status}</Text>
+                  <View style={styles.statusBadge}>
+                    <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
+                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                  </View>
                 </View>
               </View>
             )}
@@ -94,7 +104,7 @@ export default function DistributorDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -103,90 +113,103 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: Colors.light.surface,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.light.textPrimary,
   },
   content: {
-    padding: 20,
+    padding: 15,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 20,
   },
   statCard: {
     width: '48%',
+    backgroundColor: Colors.light.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 15,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.light.textPrimary,
     marginTop: 8,
   },
   statTitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: Colors.light.textSecondary,
     marginTop: 4,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 15,
+    textAlign: 'center',
   },
   actionsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 15,
   },
   actionButton: {
     width: '48%',
-    backgroundColor: '#fff',
+    backgroundColor: Colors.light.surface,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
   },
   actionButtonText: {
     marginTop: 10,
     fontWeight: '600',
-    color: '#374151',
+    color: Colors.light.primary,
     textAlign: 'center',
   },
+  card: {
+    backgroundColor: Colors.light.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 15,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.light.textPrimary,
+    marginBottom: 15,
+  },
   listItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.background,
   },
   listItemTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
+    color: Colors.light.textPrimary,
   },
   listItemSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
-    marginTop: 2,
+    color: Colors.light.textSecondary,
+    marginTop: 4,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
