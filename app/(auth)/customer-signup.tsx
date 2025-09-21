@@ -19,14 +19,20 @@ import {
 const { height } = Dimensions.get('window');
 
 export default function CustomerSignupScreen() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
   const handleSignup = () => {
-    if (!email || !password) {
-      Alert.alert('Missing Info', 'Please enter both email and password.');
+    if (!fullName || !email || !password || !confirmPassword) {
+      Alert.alert('Missing Info', 'Please fill in all fields.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Passwords do not match', 'Please check your passwords.');
       return;
     }
     // In a real app, you would create a new user account in your backend.
@@ -43,11 +49,23 @@ export default function CustomerSignupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join our community of customers</Text>
+          <Text style={styles.title}>Create Your Account</Text>
+          <Text style={styles.subtitle}>Start your journey to better health today.</Text>
         </View>
 
         <View style={styles.formContainer}>
+          <View style={styles.inputContainer}>
+            <Feather name="user" size={20} color="#6B7280" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name"
+              placeholderTextColor="#9CA3AF"
+              value={fullName}
+              onChangeText={setFullName}
+              autoCapitalize="words"
+            />
+          </View>
+
           <View style={styles.inputContainer}>
             <Feather name="mail" size={20} color="#6B7280" style={styles.inputIcon} />
             <TextInput
@@ -76,6 +94,18 @@ export default function CustomerSignupScreen() {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.inputContainer}>
+            <Feather name="lock" size={20} color="#6B7280" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              placeholderTextColor="#9CA3AF"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showPassword}
+            />
+          </View>
+
           <TouchableOpacity style={styles.primaryButton} onPress={handleSignup}>
             <Text style={styles.primaryButtonText}>Create Account</Text>
           </TouchableOpacity>
@@ -100,6 +130,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: height * 0.4,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   content: {
     flex: 1,
@@ -111,7 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
@@ -121,6 +153,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     marginTop: 8,
+    paddingHorizontal: 20,
   },
   formContainer: {
     backgroundColor: '#fff',
@@ -161,11 +194,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   primaryButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   backButton: {
     marginTop: 20,

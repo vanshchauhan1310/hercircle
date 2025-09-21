@@ -18,13 +18,13 @@ import {
 
 const { height } = Dimensions.get('window');
 
-type Role = 'pharmacy' | 'distributor' | 'admin';
+type Role = 'supplier' | 'admin';
 
 export default function SupplierLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<Role>('pharmacy');
+  const [role, setRole] = useState<Role>('supplier');
   const { login } = useAuth();
 
   const handleSupplierLogin = () => {
@@ -32,30 +32,37 @@ export default function SupplierLoginScreen() {
       Alert.alert('Missing Info', 'Please enter both email and password.');
       return;
     }
+
+    if (role === 'admin') {
+      // TODO: Implement a secure way to handle admin login.
+      // For now, we will log in any user who selects the admin role.
+      // This is not secure and should be replaced with a proper authentication mechanism.
+      login({ email, role, loggedInAt: Date.now() });
+      return;
+    }
+
     login({ email, role, loggedInAt: Date.now() });
   };
 
   const RoleSelector = () => (
-    <View style={styles.roleSelectorContainer}>
-      {[
-        { id: 'pharmacy', name: 'Pharmacy', icon: 'home' },
-        { id: 'distributor', name: 'Distributor', icon: 'truck' },
-        { id: 'admin', name: 'Admin', icon: 'shield' },
-      ].map((r) => (
-        <TouchableOpacity
-          key={r.id}
-          style={[styles.roleButton, role === r.id && styles.roleButtonActive]}
-          onPress={() => setRole(r.id as Role)}>
-          <Feather
-            name={r.icon as any}
-            size={18}
-            color={role === r.id ? '#fff' : '#4B5563'}
-          />
-          <Text style={[styles.roleButtonText, role === r.id && styles.roleButtonTextActive]}>
-            {r.name}
-          </Text>
-        </TouchableOpacity>
-      ))}
+    <View>
+      <Text style={styles.roleSelectorLabel}>Select your role</Text>
+      <View style={styles.roleSelectorContainer}>
+        {[
+          { id: 'supplier', name: 'Supplier', icon: 'briefcase' },
+          { id: 'admin', name: 'Admin', icon: 'shield' },
+        ].map((r) => (
+          <TouchableOpacity
+            key={r.id}
+            style={[styles.roleButton, role === r.id && styles.roleButtonActive]}
+            onPress={() => setRole(r.id as Role)}>
+            <Feather name={r.icon as any} size={18} color={role === r.id ? '#fff' : '#4B5563'} />
+            <Text style={[styles.roleButtonText, role === r.id && styles.roleButtonTextActive]}>
+              {r.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 
@@ -68,7 +75,9 @@ export default function SupplierLoginScreen() {
         style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Supplier Portal</Text>
-          <Text style={styles.subtitle}>Sign in to your business account</Text>
+          <Text style={styles.subtitle}>
+            Access your dashboard, manage inventory, and view orders.
+          </Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -108,7 +117,9 @@ export default function SupplierLoginScreen() {
             <Text style={styles.primaryButtonText}>Sign In</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/(auth)/supplier-signup')}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.push('/(auth)/supplier-signup')}>
             <Text style={styles.secondaryButtonText}>Create a new Supplier Account</Text>
           </TouchableOpacity>
 
@@ -122,15 +133,6 @@ export default function SupplierLoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  secondaryButton: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    color: '#059669',
-    fontWeight: '600',
-  },
   container: {
     flex: 1,
     backgroundColor: '#F3F4F6',
@@ -141,6 +143,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: height * 0.4,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   content: {
     flex: 1,
@@ -152,7 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
@@ -162,6 +166,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     marginTop: 8,
+    paddingHorizontal: 20,
   },
   formContainer: {
     backgroundColor: '#fff',
@@ -172,6 +177,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 24,
     elevation: 12,
+  },
+  roleSelectorLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563',
+    marginBottom: 8,
+    marginLeft: 4,
   },
   roleSelectorContainer: {
     flexDirection: 'row',
@@ -185,19 +197,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 10,
-    gap: 6,
+    gap: 8,
   },
   roleButtonActive: {
     backgroundColor: '#10B981',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowColor: '#059669',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 5,
   },
   roleButtonText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#4B5563',
   },
@@ -233,14 +245,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
   },
   primaryButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  secondaryButton: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 14,
+    color: '#059669',
     fontWeight: '600',
   },
   backButton: {
-    marginTop: 20,
+    marginTop: 16,
     alignItems: 'center',
   },
   backButtonText: {
