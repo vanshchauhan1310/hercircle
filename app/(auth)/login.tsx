@@ -41,7 +41,7 @@ export default function LoginScreen() {
         style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your customer account</Text>
+          <Text style={styles.subtitle}>Your health journey continues here. Sign in to proceed.</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -94,7 +94,7 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={styles.tertiaryButton}
             onPress={() => router.push('/(auth)/supplier-login')}>
-            <Text style={styles.tertiaryButtonText}>Login as a Supplier</Text>
+            <Text style={styles.tertiaryButtonText}>Login as a Supplier or Admin</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -113,6 +113,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: height * 0.4,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   content: {
     flex: 1,
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
@@ -134,6 +136,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     marginTop: 8,
+    paddingHorizontal: 20,
   },
   formContainer: {
     backgroundColor: '#fff',
@@ -183,7 +186,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -213,15 +216,15 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1d4ed8',
+    color: '#1D4ED8',
   },
   tertiaryButton: {
-    marginTop: 15,
+    marginTop: 20,
     alignItems: 'center',
   },
   tertiaryButtonText: {
     fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
+    color: '#3B82F6',
+    fontWeight: '600',
   },
 });
