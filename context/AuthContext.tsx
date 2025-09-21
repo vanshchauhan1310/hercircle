@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type AuthData = {
@@ -26,26 +25,7 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-function useProtectedRoute(auth: AuthData | null) {
-  const segments = useSegments();
-  const router = useRouter();
-
-  useEffect(() => {
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!auth && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } else if (auth) {
-      const roleDashboard = `/${auth.role}`;
-      if (inAuthGroup) {
-        router.replace(roleDashboard);
-      } else if (segments[0] !== auth.role && segments[0] !== '(tabs)') {
-        // Redirect to their role's dashboard if they are on a page they shouldn't be on
-        router.replace(roleDashboard);
-      }
-    }
-  }, [auth, segments]);
-}
+// Remove useProtectedRoute from here - we'll handle it differently
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [auth, setAuth] = useState<AuthData | null>(null);
@@ -67,8 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     loadAuthData();
   }, []);
-
-  useProtectedRoute(auth);
 
   const login = async (data: AuthData) => {
     setAuth(data);

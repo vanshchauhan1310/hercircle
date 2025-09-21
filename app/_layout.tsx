@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/context/AuthContext';
+import ProtectedRoute from '@/context/ProtectedRoute';
 import { Stack } from 'expo-router';
 
 export default function RootLayout() {
@@ -13,6 +14,8 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="onboarding/health-quiz" />
       </Stack>
+      {/* Add ProtectedRoute AFTER the Stack navigator */}
+      <ProtectedRoute />
     </AuthProvider>
   );
 }
