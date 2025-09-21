@@ -10,7 +10,8 @@ export default function RootLayout() {
         <Stack.Screen name="pharmacy" />
         <Stack.Screen name="distributor" />
         <Stack.Screen name="admin" />
-        <Stack.Screen name="onboarding/signup" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="onboarding/health-quiz" />
       </Stack>
     </AuthProvider>
   );

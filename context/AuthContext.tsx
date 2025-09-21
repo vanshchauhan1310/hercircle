@@ -33,30 +33,15 @@ function useProtectedRoute(auth: AuthData | null) {
   useEffect(() => {
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (
-      // If the user is not signed in and the initial segment is not anything in the auth group.
-      !auth &&
-      !inAuthGroup
-    ) {
-      // Redirect to the login page.
+    if (!auth && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (auth && inAuthGroup) {
-      // Redirect away from the login page if the user is signed in.
-      switch (auth.role) {
-        case 'customer':
-          router.replace('/(tabs)');
-          break;
-        case 'pharmacy':
-          router.replace('/pharmacy');
-          break;
-        case 'distributor':
-          router.replace('/distributor');
-          break;
-        case 'admin':
-          router.replace('/admin');
-          break;
-        default:
-          router.replace('/(tabs)');
+    } else if (auth) {
+      const roleDashboard = `/${auth.role}`;
+      if (inAuthGroup) {
+        router.replace(roleDashboard);
+      } else if (segments[0] !== auth.role && segments[0] !== '(tabs)') {
+        // Redirect to their role's dashboard if they are on a page they shouldn't be on
+        router.replace(roleDashboard);
       }
     }
   }, [auth, segments]);
