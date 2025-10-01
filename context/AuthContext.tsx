@@ -34,6 +34,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadAuthData = async () => {
       try {
+        // Clear local storage on development server start to avoid stale sessions
+        if (__DEV__) {
+          await AsyncStorage.clear();
+        }
         const authDataString = await AsyncStorage.getItem('user_auth');
         if (authDataString) {
           setAuth(JSON.parse(authDataString));

@@ -5,75 +5,80 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const DIST_KEY = 'admin_distributors';
+const PHARMACY_KEY = 'admin_pharmacies';
 
-interface Distributor {
+interface Pharmacy {
   id: string;
   name: string;
-  location?: string;
-  email?: string;
+  owner: string;
+  city?: string;
   phone?: string;
 }
 
-async function loadDistributors(): Promise<Distributor[]> {
-  const raw = await AsyncStorage.getItem(DIST_KEY);
+async function loadPharmacies(): Promise<Pharmacy[]> {
+  const raw = await AsyncStorage.getItem(PHARMACY_KEY);
   return raw ? JSON.parse(raw) : [];
 }
 
-async function saveDistributors(items: Distributor[]) {
-  await AsyncStorage.setItem(DIST_KEY, JSON.stringify(items));
+async function savePharmacies(items: Pharmacy[]) {
+  await AsyncStorage.setItem(PHARMACY_KEY, JSON.stringify(items));
 }
 
-export default function ManageDistributorsScreen() {
+export default function ManagePharmaciesScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<Distributor[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [items, setItems] = useState<Pharmacy[]>([]);
+  const [search, setSearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [editing, setEditing] = useState<Distributor | null>(null);
-  const [form, setForm] = useState({ name: '', location: '', email: '', phone: '' });
+  const [editing, setEditing] = useState<Pharmacy | null>(null);
+  const [form, setForm] = useState({ name: '', owner: '', city: '', phone: '' });
 
   useEffect(() => {
-    (async () => setItems(await loadDistributors()))();
+    (async () => setItems(await loadPharmacies()))();
   }, []);
 
   const filtered = useMemo(() => {
-    if (!searchQuery) return items;
-    const s = searchQuery.toLowerCase();
-    return items.filter(i => i.name.toLowerCase().includes(s) || i.location?.toLowerCase().includes(s) || i.email?.toLowerCase().includes(s) || i.phone?.toLowerCase().includes(s));
-  }, [items, searchQuery]);
+    if (!search) return items;
+    const s = search.toLowerCase();
+    return items.filter(i =>
+      i.name.toLowerCase().includes(s) ||
+      i.owner.toLowerCase().includes(s) ||
+      i.city?.toLowerCase().includes(s) ||
+      i.phone?.toLowerCase().includes(s)
+    );
+  }, [items, search]);
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', location: '', email: '', phone: '' });
+    setForm({ name: '', owner: '', city: '', phone: '' });
     setModalVisible(true);
   };
 
-  const openEdit = (it: Distributor) => {
+  const openEdit = (it: Pharmacy) => {
     setEditing(it);
-    setForm({ name: it.name, location: it.location || '', email: it.email || '', phone: it.phone || '' });
+    setForm({ name: it.name, owner: it.owner, city: it.city || '', phone: it.phone || '' });
     setModalVisible(true);
   };
 
   const remove = async (id: string) => {
     const next = items.filter(i => i.id !== id);
     setItems(next);
-    await saveDistributors(next);
+    await savePharmacies(next);
   };
 
   const submit = async () => {
-    if (!form.name.trim()) {
-      Alert.alert('Name required', 'Distributor name is required.');
+    if (!form.name.trim() || !form.owner.trim()) {
+      Alert.alert('Missing fields', 'Name and Owner are required.');
       return;
     }
     if (editing) {
-      const next = items.map(i => i.id === editing.id ? { ...i, name: form.name.trim(), location: form.location.trim() || undefined, email: form.email.trim() || undefined, phone: form.phone.trim() || undefined } : i);
+      const next = items.map(i => i.id === editing.id ? { ...i, ...form, name: form.name.trim(), owner: form.owner.trim(), city: form.city.trim() || undefined, phone: form.phone.trim() || undefined } : i);
       setItems(next);
-      await saveDistributors(next);
+      await savePharmacies(next);
     } else {
-      const it: Distributor = { id: `${Date.now()}`, name: form.name.trim(), location: form.location.trim() || undefined, email: form.email.trim() || undefined, phone: form.phone.trim() || undefined };
+      const it: Pharmacy = { id: `${Date.now()}`, name: form.name.trim(), owner: form.owner.trim(), city: form.city.trim() || undefined, phone: form.phone.trim() || undefined };
       const next = [it, ...items];
       setItems(next);
-      await saveDistributors(next);
+      await savePharmacies(next);
     }
     setModalVisible(false);
   };
@@ -84,7 +89,7 @@ export default function ManageDistributorsScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Feather name="chevron-left" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Distributors</Text>
+        <Text style={styles.headerTitle}>Manage Pharmacies</Text>
         <TouchableOpacity onPress={openCreate}>
           <Feather name="plus" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
@@ -94,9 +99,9 @@ export default function ManageDistributorsScreen() {
         <Feather name="search" size={20} color={Colors.light.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search distributors..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+          placeholder="Search pharmacies..."
+          value={search}
+          onChangeText={setSearch}
         />
       </View>
 
@@ -106,10 +111,10 @@ export default function ManageDistributorsScreen() {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.listItem} onPress={() => openEdit(item)}>
-            <Feather name="truck" size={24} color={Colors.light.primary} />
+            <Feather name="home" size={24} color={Colors.light.primary} />
             <View style={styles.listItemContent}>
               <Text style={styles.listItemTitle}>{item.name}</Text>
-              <Text style={styles.listItemSubtitle}>{item.location || '—'} · {item.email || '—'} · {item.phone || '—'}</Text>
+              <Text style={styles.listItemSubtitle}>Owner: {item.owner} · {item.city || '—'} · {item.phone || '—'}</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -118,10 +123,10 @@ export default function ManageDistributorsScreen() {
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalWrap}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{editing ? 'Edit Distributor' : 'Add Distributor'}</Text>
-            <TextInput style={styles.modalInput} placeholder="Name" value={form.name} onChangeText={v => setForm({ ...form, name: v })} />
-            <TextInput style={styles.modalInput} placeholder="Location" value={form.location} onChangeText={v => setForm({ ...form, location: v })} />
-            <TextInput style={styles.modalInput} placeholder="Email" keyboardType="email-address" value={form.email} onChangeText={v => setForm({ ...form, email: v })} />
+            <Text style={styles.modalTitle}>{editing ? 'Edit Pharmacy' : 'Add Pharmacy'}</Text>
+            <TextInput style={styles.modalInput} placeholder="Pharmacy Name" value={form.name} onChangeText={v => setForm({ ...form, name: v })} />
+            <TextInput style={styles.modalInput} placeholder="Owner Name" value={form.owner} onChangeText={v => setForm({ ...form, owner: v })} />
+            <TextInput style={styles.modalInput} placeholder="City" value={form.city} onChangeText={v => setForm({ ...form, city: v })} />
             <TextInput style={styles.modalInput} placeholder="Phone" keyboardType="phone-pad" value={form.phone} onChangeText={v => setForm({ ...form, phone: v })} />
 
             <View style={styles.modalActions}>

@@ -29,6 +29,7 @@ const mockData = {
 
 export default function DistributorDashboard() {
   const { logout } = useAuth();
+  const router = useRouter();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -64,13 +65,24 @@ export default function DistributorDashboard() {
         </View>
 
         <View style={styles.actionsGrid}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/distributor/orders-to-admin')}>
             <Feather name="plus-circle" size={24} color={Colors.light.primary} />
             <Text style={styles.actionButtonText}>New Order to Admin</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/distributor/stock')}>
             <Feather name="list" size={24} color={Colors.light.primary} />
             <Text style={styles.actionButtonText}>My Stock</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/distributor/pharmacies')}>
+            <Feather name="home" size={24} color={Colors.light.primary} />
+            <Text style={styles.actionButtonText}>Pharmacies</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Feather name="bar-chart-2" size={24} color={Colors.light.primary} />
+            <Text style={styles.actionButtonText}>Stats</Text>
           </TouchableOpacity>
         </View>
 

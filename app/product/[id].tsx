@@ -3,7 +3,9 @@ import { ThemedView } from '@/components/ThemedView';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
 
 interface Product {
   id: string;
@@ -248,6 +250,7 @@ function SubscriptionOptions() {
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams();
+  const { auth } = useAuth();
   const [selectedAbsorbency, setSelectedAbsorbency] = useState(PRODUCT.absorbency[0]);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -256,6 +259,33 @@ export default function ProductDetail() {
   const discountPercent = PRODUCT.originalPrice 
     ? Math.round((1 - PRODUCT.price / PRODUCT.originalPrice) * 100)
     : 0;
+
+  const addToPharmacyInventory = async () => {
+    try {
+      if (auth?.role !== 'pharmacy') return;
+      const authPh = JSON.parse((await AsyncStorage.getItem('pharmacy_auth')) || 'null');
+      const stores = JSON.parse((await AsyncStorage.getItem('pharmacy_stores')) || '[]');
+      const s = stores.find((x: any) => x.id === authPh?.storeId);
+      if (!s) {
+        Alert.alert('No store found', 'Please add your store details first in Settings.');
+        return;
+      }
+      const catRaw = await AsyncStorage.getItem('global_product_catalog');
+      const catalog = catRaw ? JSON.parse(catRaw) : [];
+      const item = catalog.find((c: any) => String(c.id) === String(id)) || { id: PRODUCT.id, name: PRODUCT.name, price: PRODUCT.price, category: 'General' };
+      s.inventory = s.inventory || [];
+      const exists = (s.inventory || []).some((x: any) => x.name === item.name);
+      if (exists) {
+        Alert.alert('Already in inventory', 'This product already exists in your inventory.');
+        return;
+      }
+      s.inventory.unshift({ id: `${Date.now()}`, name: item.name, sku: String(item.id), price: item.price, stock: 0, reorderLevel: 5, category: item.category || 'General' });
+      const idx = stores.findIndex((x: any) => x.id === s.id);
+      stores[idx] = s;
+      await AsyncStorage.setItem('pharmacy_stores', JSON.stringify(stores));
+      Alert.alert('Added', `${item.name} has been added to your inventory.`);
+    } catch (e) {}
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -381,6 +411,14 @@ export default function ProductDetail() {
               🛒 Add to Cart - ${(PRODUCT.price * quantity).toFixed(2)}
             </ThemedText>
           </Pressable>
+
+          {auth?.role === 'pharmacy' && (
+            <Pressable style={[styles.addToCartButton, { backgroundColor: '#7C3AED' }]} onPress={addToPharmacyInventory}>
+              <ThemedText type="defaultSemiBold" style={{ color: '#FFFFFF', fontSize: 16 }}>
+                ➕ Add to Inventory
+              </ThemedText>
+            </Pressable>
+          )}
 
           <View style={styles.trustIndicators}>
             <View style={styles.trustItem}>

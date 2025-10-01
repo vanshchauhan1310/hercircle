@@ -2,7 +2,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   SafeAreaView,
   ScrollView,
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { BarChart, XAxis, YAxis } from 'react-native-svg-charts';
+/* Charts temporarily disabled due to library incompatibility */
 
 const mockData = {
   stats: [
@@ -37,6 +38,63 @@ const mockData = {
 export default function AdminDashboard() {
   const { logout } = useAuth();
   const router = useRouter();
+  const [pendingDistributors, setPendingDistributors] = useState<any[]>([]);
+  const [pendingPharmacies, setPendingPharmacies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadPending = async () => {
+    try {
+      const pd = JSON.parse((await AsyncStorage.getItem('admin_pending_distributors')) || '[]');
+      const pp = JSON.parse((await AsyncStorage.getItem('admin_pending_pharmacies')) || '[]');
+      setPendingDistributors(pd);
+      setPendingPharmacies(pp);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPending();
+  }, []);
+
+  const approveDistributor = async (item: any) => {
+    const pd = pendingDistributors.filter((d) => d.id !== item.id);
+    const approved = JSON.parse((await AsyncStorage.getItem('admin_distributors')) || '[]');
+    approved.unshift({ id: item.id, name: item.name, location: item.location || '', email: item.email || '', phone: item.phone || '' });
+    await AsyncStorage.setItem('admin_distributors', JSON.stringify(approved));
+    await AsyncStorage.setItem('admin_pending_distributors', JSON.stringify(pd));
+    setPendingDistributors(pd);
+  };
+
+  const rejectDistributor = async (item: any) => {
+    const pd = pendingDistributors.filter((d) => d.id !== item.id);
+    await AsyncStorage.setItem('admin_pending_distributors', JSON.stringify(pd));
+    setPendingDistributors(pd);
+  };
+
+  const approvePharmacy = async (item: any) => {
+    const pp = pendingPharmacies.filter((p) => p.id !== item.id);
+    const approved = JSON.parse((await AsyncStorage.getItem('admin_pharmacies')) || '[]');
+    approved.unshift({ id: item.id, name: item.name, owner: item.owner, city: item.city || '', phone: item.phone || '' });
+    await AsyncStorage.setItem('admin_pharmacies', JSON.stringify(approved));
+
+    // Ensure a store exists for this pharmacy
+    const stores = JSON.parse((await AsyncStorage.getItem('pharmacy_stores')) || '[]');
+    const exists = stores.find((s: any) => (s.owner || '').toLowerCase() === (item.owner || '').toLowerCase());
+    if (!exists) {
+      stores.unshift({ id: `${Date.now()}`, name: item.name, owner: item.owner, city: item.city || '', phone: item.phone || '', inventory: [] });
+      await AsyncStorage.setItem('pharmacy_stores', JSON.stringify(stores));
+    }
+
+    await AsyncStorage.setItem('admin_pending_pharmacies', JSON.stringify(pp));
+    setPendingPharmacies(pp);
+  };
+
+  const rejectPharmacy = async (item: any) => {
+    const pp = pendingPharmacies.filter((p) => p.id !== item.id);
+    await AsyncStorage.setItem('admin_pending_pharmacies', JSON.stringify(pp));
+    setPendingPharmacies(pp);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -59,29 +117,60 @@ export default function AdminDashboard() {
         </View>
 
         <View style={styles.chartCard}>
-          <Text style={styles.cardTitle}>Monthly Revenue (in thousands)</Text>
-          <View style={{ height: 200, flexDirection: 'row' }}>
-            <YAxis
-              data={mockData.revenueData.map(d => d.value)}
-              contentInset={{ top: 20, bottom: 20 }}
-              svg={{ fontSize: 10, fill: Colors.light.textSecondary }}
-              numberOfTicks={6}
-              formatLabel={(value) => `$${value}k`}
-            />
-            <BarChart
-              style={{ flex: 1, marginLeft: 10 }}
-              data={mockData.revenueData.map(d => d.value)}
-              svg={{ fill: Colors.light.primaryMuted }}
-              contentInset={{ top: 20, bottom: 20 }}
-            />
+          <Text style={styles.cardTitle}>Monthly Revenue</Text>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            {mockData.revenueData.map((d, i) => (
+              <View key={i} style={{ alignItems: 'center' }}>
+                <View style={{ height: d.value * 1.2, width: 20, backgroundColor: Colors.light.primaryMuted, borderRadius: 4 }} />
+                <Text style={{ marginTop: 6, color: Colors.light.textSecondary, fontSize: 12 }}>{d.label}</Text>
+              </View>
+            ))}
           </View>
-          <XAxis
-            style={{ marginHorizontal: 10, marginTop: 10 }}
-            data={mockData.revenueData}
-            formatLabel={(_, index) => mockData.revenueData[index].label}
-            contentInset={{ left: 30, right: 30 }}
-            svg={{ fontSize: 10, fill: Colors.light.textSecondary }}
-          />
+        </View>
+
+        {/* Approval Requests */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Approval Requests</Text>
+
+          <Text style={{ fontWeight: '700', marginBottom: 10, color: Colors.light.textPrimary }}>Distributors</Text>
+          {pendingDistributors.length === 0 ? (
+            <Text style={{ color: Colors.light.textSecondary, marginBottom: 10 }}>No pending distributor requests</Text>
+          ) : pendingDistributors.map((d) => (
+            <View key={d.id} style={styles.approvalRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.listItemTitle}>{d.name}</Text>
+                <Text style={styles.listItemSubtitle}>{d.email || '—'} · {d.phone || '—'} · {d.location || '—'}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.smallBtn, { backgroundColor: Colors.light.success }]} onPress={() => approveDistributor(d)}>
+                  <Feather name="check" size={16} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.smallBtn, { backgroundColor: '#EF4444' }]} onPress={() => rejectDistributor(d)}>
+                  <Feather name="x" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+
+          <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 10, color: Colors.light.textPrimary }}>Pharmacies</Text>
+          {pendingPharmacies.length === 0 ? (
+            <Text style={{ color: Colors.light.textSecondary }}>No pending pharmacy requests</Text>
+          ) : pendingPharmacies.map((p) => (
+            <View key={p.id} style={styles.approvalRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.listItemTitle}>{p.name}</Text>
+                <Text style={styles.listItemSubtitle}>{p.owner || '—'} · {p.phone || '—'} · {p.city || '—'}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.smallBtn, { backgroundColor: Colors.light.success }]} onPress={() => approvePharmacy(p)}>
+                  <Feather name="check" size={16} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.smallBtn, { backgroundColor: '#EF4444' }]} onPress={() => rejectPharmacy(p)}>
+                  <Feather name="x" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
         </View>
 
         <View style={styles.card}>
@@ -89,6 +178,10 @@ export default function AdminDashboard() {
           <TouchableOpacity style={styles.managementButton} onPress={() => router.push('/admin/management/distributors')}>
             <Feather name="truck" size={22} color={Colors.light.primary} />
             <Text style={styles.managementButtonText}>Manage Distributors</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.managementButton} onPress={() => router.push('/admin/management/pharmacies')}>
+            <Feather name="home" size={22} color={Colors.light.primary} />
+            <Text style={styles.managementButtonText}>Manage Pharmacies</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.managementButton} onPress={() => router.push('/admin/management/products')}>
             <Feather name="box" size={22} color={Colors.light.primary} />
@@ -181,5 +274,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.light.textPrimary,
+  },
+  approvalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.background,
+  },
+  smallBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.light.textPrimary,
+  },
+  listItemSubtitle: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginTop: 2,
   },
 });

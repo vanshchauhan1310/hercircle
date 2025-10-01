@@ -1,8 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/Colors';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { router } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Image,
   SafeAreaView,
@@ -13,16 +15,57 @@ import {
   View,
 } from 'react-native';
 
-const mockProducts = [
-  { id: '1', name: 'Product A', category: 'Category 1', price: 10.99, image: 'https://via.placeholder.com/150' },
-  { id: '2', name: 'Product B', category: 'Category 2', price: 25.50, image: 'https://via.placeholder.com/150' },
-  { id: '3', name: 'Product C', category: 'Category 1', price: 15.00, image: 'https://via.placeholder.com/150' },
-  { id: '4', name: 'Product D', category: 'Category 3', price: 5.99, image: 'https://via.placeholder.com/150' },
+const CATALOG_KEY = 'global_product_catalog';
+
+interface CatalogItem { id: string; name: string; category: string; price: number; image?: string; brand?: string; }
+
+const seedCatalog: CatalogItem[] = [
+  { id: '1', name: 'Paracetamol 500mg', category: 'Analgesic', price: 2.49, image: 'https://via.placeholder.com/150', brand: 'ACME' },
+  { id: '2', name: 'Ibuprofen 200mg', category: 'NSAID', price: 3.99, image: 'https://via.placeholder.com/150', brand: 'HealWell' },
+  { id: '3', name: 'Cough Syrup 100ml', category: 'Cold & Flu', price: 5.5, image: 'https://via.placeholder.com/150', brand: 'Soothe' },
+  { id: '4', name: 'Vitamin C 1000mg', category: 'Supplements', price: 8.0, image: 'https://via.placeholder.com/150', brand: 'Immuno' },
 ];
 
+async function loadCatalog(): Promise<CatalogItem[]> {
+  const raw = await AsyncStorage.getItem(CATALOG_KEY);
+  return raw ? JSON.parse(raw) : seedCatalog;
+}
+
 export default function ProductCatalogScreen() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [items, setItems] = useState<CatalogItem[]>([]);
+
+  useEffect(() => {
+    (async () => setItems(await loadCatalog()))();
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!searchQuery) return items;
+    const s = searchQuery.toLowerCase();
+    return items.filter(i => i.name.toLowerCase().includes(s) || i.category.toLowerCase().includes(s) || (i.brand||'').toLowerCase().includes(s));
+  }, [items, searchQuery]);
+
+  const addToInventory = async (p: CatalogItem) => {
+    // Adds selected product to current pharmacy inventory
+    const auth = JSON.parse((await AsyncStorage.getItem('pharmacy_auth')) || 'null');
+    const stores = JSON.parse((await AsyncStorage.getItem('pharmacy_stores')) || '[]');
+    const s = stores.find((x: any) => x.id === auth?.storeId);
+    if (!s) {
+      Alert.alert('No store found', 'Please add your store details first in Settings.');
+      return;
+    }
+    s.inventory = s.inventory || [];
+    const exists = (s.inventory || []).some((x: any) => x.name === p.name);
+    if (exists) {
+      Alert.alert('Already in inventory', 'This product already exists in your inventory.');
+      return;
+    }
+    s.inventory.unshift({ id: `${Date.now()}`, name: p.name, sku: p.id, price: p.price, stock: 0, reorderLevel: 5, category: p.category });
+    const idx = stores.findIndex((x: any) => x.id === s.id);
+    stores[idx] = s;
+    await AsyncStorage.setItem('pharmacy_stores', JSON.stringify(stores));
+    Alert.alert('Added', `${p.name} has been added to your inventory.`);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -31,7 +74,7 @@ export default function ProductCatalogScreen() {
           <Feather name="chevron-left" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Product Catalog</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/pharmacy/inventory')}>
           <Feather name="shopping-cart" size={24} color={Colors.light.textPrimary} />
         </TouchableOpacity>
       </View>
@@ -47,16 +90,20 @@ export default function ProductCatalogScreen() {
       </View>
 
       <FlatList
-        data={mockProducts}
+        data={filtered}
         keyExtractor={(item) => item.id}
         numColumns={2}
         renderItem={({ item }) => (
-          <View style={styles.productCard}>
+          <TouchableOpacity style={styles.productCard} onPress={() => router.push({ pathname: '/product/[id]', params: { id: item.id } })}>
             <Image source={{ uri: item.image }} style={styles.productImage} />
             <Text style={styles.productName}>{item.name}</Text>
             <Text style={styles.productCategory}>{item.category}</Text>
             <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-          </View>
+            <TouchableOpacity style={styles.addBtn} onPress={() => addToInventory(item)}>
+              <Feather name="plus" size={16} color="#fff" />
+              <Text style={styles.addBtnText}>Add to Inventory</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.list}
       />
@@ -130,4 +177,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.light.primary,
   },
+  addBtn: { marginTop: 8, backgroundColor: '#7C3AED', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  addBtnText: { color: '#fff', fontWeight: '700' },
 });

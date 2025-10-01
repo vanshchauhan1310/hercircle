@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
   Dimensions,
@@ -18,23 +19,44 @@ import {
 
 const { height } = Dimensions.get('window');
 
-type Role = 'supplier';
+import { router as appRouter } from 'expo-router';
+
+type Role = 'distributor' | 'pharmacy';
 
 export default function SupplierSignupScreen() {
   const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<Role>('distributor');
+  const [details, setDetails] = useState({ city: '', phone: '' });
   const { login } = useAuth();
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!email || !password || !companyName) {
       Alert.alert('Missing Info', 'Please fill in all fields.');
       return;
     }
-    // In a real app, you would create a new supplier account in your backend.
-    // For now, we'll just log in the user with the selected role.
-    login({ email, role: 'supplier', loggedInAt: Date.now() });
+
+    try {
+      if (role === 'distributor') {
+        const pendingKey = 'admin_pending_distributors';
+        const list = JSON.parse((await AsyncStorage.getItem(pendingKey)) || '[]');
+        list.unshift({ id: `${Date.now()}`, name: companyName, email, phone: details.phone || '', location: details.city || '' });
+        await AsyncStorage.setItem(pendingKey, JSON.stringify(list));
+      } else if (role === 'pharmacy') {
+        const pendingKey = 'admin_pending_pharmacies';
+        const list = JSON.parse((await AsyncStorage.getItem(pendingKey)) || '[]');
+        list.unshift({ id: `${Date.now()}`, name: companyName, owner: email, city: details.city || '', phone: details.phone || '' });
+        await AsyncStorage.setItem(pendingKey, JSON.stringify(list));
+      }
+
+      Alert.alert('Request submitted', 'Your account is pending admin approval. You will be able to login once approved.', [
+        { text: 'OK', onPress: () => appRouter.replace('/(auth)/supplier-login') },
+      ]);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to submit request. Please try again.');
+    }
   };
 
   return (
@@ -50,17 +72,42 @@ export default function SupplierSignupScreen() {
         </View>
 
         <View style={styles.formContainer}>
+          <View style={styles.roleSelectorContainer}>
+            {[
+              { id: 'distributor', label: 'Distributor', icon: 'truck' },
+              { id: 'pharmacy', label: 'Pharmacy', icon: 'home' },
+            ].map((r) => (
+              <TouchableOpacity key={r.id} style={[styles.roleButton, role === (r.id as Role) && styles.roleButtonActive]} onPress={() => setRole(r.id as Role)}>
+                <Feather name={r.icon as any} size={16} color={role === (r.id as Role) ? '#fff' : '#4B5563'} />
+                <Text style={[styles.roleButtonText, role === (r.id as Role) && styles.roleButtonTextActive]}>{r.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View style={styles.inputContainer}>
             <Feather name="briefcase" size={20} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Company Name"
+              placeholder={role === 'pharmacy' ? 'Pharmacy Name' : 'Company Name'}
               placeholderTextColor="#9CA3AF"
               value={companyName}
               onChangeText={setCompanyName}
               autoCapitalize="words"
             />
           </View>
+
+          {role === 'pharmacy' && (
+            <>
+              <View style={styles.inputContainer}>
+                <Feather name="map-pin" size={20} color="#6B7280" style={styles.inputIcon} />
+                <TextInput style={styles.input} placeholder="City" placeholderTextColor="#9CA3AF" value={details.city} onChangeText={(v) => setDetails({ ...details, city: v })} />
+              </View>
+              <View style={styles.inputContainer}>
+                <Feather name="phone" size={20} color="#6B7280" style={styles.inputIcon} />
+                <TextInput style={styles.input} placeholder="Phone" placeholderTextColor="#9CA3AF" keyboardType="phone-pad" value={details.phone} onChangeText={(v) => setDetails({ ...details, phone: v })} />
+              </View>
+            </>
+          )}
 
           <View style={styles.inputContainer}>
             <Feather name="mail" size={20} color="#6B7280" style={styles.inputIcon} />
@@ -149,44 +196,11 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 12,
   },
-  roleSelectorLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4B5563',
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  roleSelectorContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 20,
-  },
-  roleButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 8,
-  },
-  roleButtonActive: {
-    backgroundColor: '#10B981',
-    shadowColor: '#059669',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  roleButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  roleButtonTextActive: {
-    color: '#fff',
-  },
+  roleSelectorContainer: { flexDirection: 'row', backgroundColor: '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 20 },
+  roleButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, gap: 6 },
+  roleButtonActive: { backgroundColor: '#10B981' },
+  roleButtonText: { fontSize: 14, fontWeight: '600', color: '#4B5563' },
+  roleButtonTextActive: { color: '#fff' },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',

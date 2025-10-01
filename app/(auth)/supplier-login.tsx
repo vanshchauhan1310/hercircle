@@ -18,30 +18,57 @@ import {
 
 const { height } = Dimensions.get('window');
 
-type Role = 'supplier' | 'admin';
+type Role = 'admin' | 'distributor' | 'pharmacy';
 
 export default function SupplierLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<Role>('supplier');
+  const [role, setRole] = useState<Role>('distributor');
   const { login } = useAuth();
 
-  const handleSupplierLogin = () => {
+  const handleSupplierLogin = async () => {
     if (!email || !password) {
       Alert.alert('Missing Info', 'Please enter both email and password.');
       return;
     }
 
-    if (role === 'admin') {
-      // TODO: Implement a secure way to handle admin login.
-      // For now, we will log in any user who selects the admin role.
-      // This is not secure and should be replaced with a proper authentication mechanism.
-      login({ email, role, loggedInAt: Date.now() });
-      return;
-    }
+    try {
+      if (role === 'admin') {
+        // Fixed admin login credentials (remove admin self-signup)
+        if (email.trim().toLowerCase() === 'admin@hercircle.com' && password === 'StrongPassword!') {
+          login({ email, role: 'admin', loggedInAt: Date.now() } as any);
+        } else {
+          Alert.alert('Access denied', 'Invalid admin credentials.');
+        }
+        return;
+      }
 
-    login({ email, role, loggedInAt: Date.now() });
+      if (role === 'distributor') {
+        const approved = JSON.parse((await AsyncStorage.getItem('admin_distributors')) || '[]');
+        const exists = approved.find((d: any) => (d.email || '').toLowerCase() === email.trim().toLowerCase());
+        if (exists) {
+          login({ email, role: 'distributor', loggedInAt: Date.now() } as any);
+        } else {
+          Alert.alert('Pending approval', 'Your distributor account is pending approval or not found.');
+        }
+        return;
+      }
+
+      if (role === 'pharmacy') {
+        const approved = JSON.parse((await AsyncStorage.getItem('admin_pharmacies')) || '[]');
+        const exists = approved.find((p: any) => (p.owner || '').toLowerCase() === email.trim().toLowerCase());
+        if (exists) {
+          login({ email, role: 'pharmacy', loggedInAt: Date.now() } as any);
+        } else {
+          Alert.alert('Pending approval', 'Your pharmacy account is pending approval or not found.');
+        }
+        return;
+
+      }
+    } catch (e) {
+      Alert.alert('Error', 'An unexpected error occurred while logging in.');
+    }
   };
 
   const RoleSelector = () => (
@@ -49,7 +76,8 @@ export default function SupplierLoginScreen() {
       <Text style={styles.roleSelectorLabel}>Select your role</Text>
       <View style={styles.roleSelectorContainer}>
         {[
-          { id: 'supplier', name: 'Supplier', icon: 'briefcase' },
+          { id: 'distributor', name: 'Distributor', icon: 'truck' },
+          { id: 'pharmacy', name: 'Pharmacy', icon: 'home' },
           { id: 'admin', name: 'Admin', icon: 'shield' },
         ].map((r) => (
           <TouchableOpacity

@@ -1,4 +1,3 @@
-
 import { useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { useAuth } from './AuthContext';
